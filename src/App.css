@@ -1,31 +1,386 @@
-.App {
+/* Estilos generales */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
+  background-color: #f0f8ff;
+}
+
+.app-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.app-title {
+  font-size: 2rem;
+  color: #ff6b6b;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.instructions {
+  background-color: #cff4fc;
+  color: #055160;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+  border: 1px solid #b6effb;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+/* Estilos para el problema matemático */
+.problem-container {
+  background-color: #ffd166;
+  border-radius: 15px;
+  padding: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.problem {
+  font-size: 1.8rem;
+  color: #333;
+}
+
+/* Estilos para la cuadrícula */
+.grid-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  margin: 20px 0;
 }
 
-.App-link {
-  color: #61dafb;
+.grid-row {
+  display: flex;
+}
+
+.grid-cell {
+  width: 70px;
+  height: 70px;
+  border: 3px solid #73a942;
+  background-color: #e0f7fa;
+  margin: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-radius: 10px;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.grid-cell:hover {
+  transform: scale(1.05);
+}
+
+.wall-cell {
+  background-color: #f8d7da;
+  border-color: #842029;
+}
+
+.wall {
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.solution-path {
+  position: relative;
+}
+
+.solution-path::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(52, 211, 153, 0.3);
+  border: 2px dashed #10b981;
+  border-radius: 8px;
+  pointer-events: none;
+  animation: pulse 1.5s infinite alternate;
+  z-index: 5;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 0.8;
+  }
+}
+
+.cell-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+  padding: 5px 10px;
+  border-radius: 50%;
+  background-color: #b4e6fc;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.correct-answer {
+  /* Mismo estilo que la respuesta incorrecta para que no se pueda distinguir */
+  background-color: #b4e6fc;
+  color: #333;
+}
+
+.incorrect-answer {
+  background-color: #b4e6fc;
+  color: #333;
+}
+
+.has-robot .cell-number {
+  opacity: 0.3;
+}
+
+/* Estilos para el robot */
+.robot {
+  position: absolute;
+  font-size: 2rem;
+  transform-origin: center;
+  transition: transform 0.5s ease;
+  z-index: 10;
+}
+
+.rotate-0 {
+  transform: rotate(0deg);
+}
+
+.rotate-90 {
+  transform: rotate(90deg);
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+.rotate-negative-90 {
+  transform: rotate(-90deg);
+}
+
+/* Estilos para los controles */
+.controls-container {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.control-button {
+  background-color: #06d6a0;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  font-size: 1.2rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 0 #049a73;
+}
+
+.control-button:hover {
+  background-color: #04b589;
+  transform: translateY(-2px);
+}
+
+.control-button:active {
+  box-shadow: 0 2px 0 #049a73;
+  transform: translateY(2px);
+}
+
+.control-button:disabled {
+  background-color: #cccccc;
+  box-shadow: 0 4px 0 #aaaaaa;
+  cursor: not-allowed;
+}
+
+/* Estilos para la cola de comandos */
+.commands-container {
+  margin: 20px 0;
+}
+
+.commands-container h3 {
+  color: #444;
+  margin-bottom: 10px;
+}
+
+.command-queue {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 10px;
+  border: 2px dashed #ef476f;
+}
+
+.command-item {
+  width: 40px;
+  height: 40px;
+  background-color: #ef476f;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.empty-queue {
+  color: #999;
+  font-style: italic;
+}
+
+/* Botones de acción */
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.execute-button {
+  background-color: #118ab2;
+  padding: 12px 25px;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 0 #0a678a;
+}
+
+.execute-button:hover {
+  background-color: #0a678a;
+  transform: translateY(-2px);
+}
+
+.execute-button:active {
+  box-shadow: 0 2px 0 #0a678a;
+  transform: translateY(2px);
+}
+
+.execute-button:disabled {
+  background-color: #cccccc;
+  box-shadow: 0 4px 0 #aaaaaa;
+  cursor: not-allowed;
+}
+
+.reset-button, .new-problem-button {
+  background-color: #ff9e00;
+  padding: 12px 25px;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 0 #e08c00;
+}
+
+.reset-button:hover, .new-problem-button:hover {
+  background-color: #e08c00;
+  transform: translateY(-2px);
+}
+
+.reset-button:active, .new-problem-button:active {
+  box-shadow: 0 2px 0 #e08c00;
+  transform: translateY(2px);
+}
+
+.reset-button:disabled, .new-problem-button:disabled {
+  background-color: #cccccc;
+  box-shadow: 0 4px 0 #aaaaaa;
+  cursor: not-allowed;
+}
+
+/* Modal de resultado */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 30px;
+  border-radius: 20px;
+  text-align: center;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content.success {
+  border: 5px solid #06d6a0;
+}
+
+.modal-content.failure {
+  border: 5px solid #ef476f;
+}
+
+.modal-content h2 {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.modal-content p {
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+}
+
+.path-info {
+  background-color: #e0f2f1;
+  padding: 10px;
+  border-radius: 5px;
+  color: #00796b;
+  border-left: 4px solid #26a69a;
+  margin-bottom: 20px !important;
+  font-weight: bold;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.modal-buttons button {
+  padding: 10px 20px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: #118ab2;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.modal-buttons button:hover {
+  background-color: #0a678a;
 }
 
 @keyframes App-logo-spin {
