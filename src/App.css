@@ -17,11 +17,364 @@ body {
   text-align: center;
 }
 
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
 .app-title {
   font-size: 2rem;
   color: #ff6b6b;
-  margin-bottom: 10px;
+  margin: 0;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.teacher-mode-button {
+  padding: 8px 16px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.teacher-mode-button:hover {
+  background-color: #5a6268;
+}
+
+.teacher-mode-button.active {
+  background-color: #007bff;
+}
+
+/* Estilos para el panel del profesor */
+.teacher-panel {
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 2px solid #dee2e6;
+}
+
+.teacher-panel h3 {
+  color: #343a40;
+  margin-top: 0;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #dee2e6;
+  padding-bottom: 8px;
+}
+
+.teacher-section {
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px dashed #dee2e6;
+}
+
+.teacher-section-header {
+  background-color: #e9ecef;
+  padding: 12px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+  margin-bottom: 15px;
+}
+
+.teacher-section-header:hover {
+  background-color: #dee2e6;
+}
+
+.teacher-section-header h4 {
+  color: #343a40;
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.teacher-section-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  opacity: 0;
+}
+
+.teacher-section-content.open {
+  max-height: 1000px;
+  opacity: 1;
+  padding: 15px 0;
+}
+
+.section-toggle-icon {
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+}
+
+.section-toggle-icon.open {
+  transform: rotate(180deg);
+}
+
+.teacher-form {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form-group label {
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #495057;
+}
+
+.form-group input {
+  width: 70px;
+  padding: 8px;
+  text-align: center;
+  border: 2px solid #ced4da;
+  border-radius: 5px;
+  font-size: 1.1rem;
+}
+
+.result-display {
+  background-color: #e9ecef;
+  padding: 8px 15px;
+  border-radius: 5px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  display: inline-block;
+  min-width: 70px;
+}
+
+.teacher-tools {
+  margin-bottom: 20px;
+}
+
+.teacher-tools h4 {
+  color: #343a40;
+  margin-bottom: 10px;
+}
+
+.tool-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.tool-button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 5px;
+  background-color: #6c757d;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tool-button:hover {
+  background-color: #5a6268;
+}
+
+.tool-button.selected {
+  background-color: #28a745;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.5);
+}
+
+/* Estilos para selector de modo de juego */
+.game-mode-selector {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.mode-button {
+  padding: 10px 20px;
+  border: 2px solid #6c757d;
+  border-radius: 8px;
+  background-color: white;
+  color: #495057;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  min-width: 150px;
+}
+
+.mode-button:hover {
+  background-color: #f8f9fa;
+  transform: translateY(-2px);
+}
+
+.mode-button.selected {
+  background-color: #007bff;
+  color: white;
+  border-color: #0069d9;
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+/* Estilos para selector de rondas */
+.rounds-selector {
+  background-color: #e9ecef;
+  padding: 15px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.rounds-selector label {
+  font-weight: bold;
+  color: #495057;
+}
+
+.rounds-selector input {
+  width: 60px;
+  padding: 8px;
+  text-align: center;
+  border: 2px solid #ced4da;
+  border-radius: 5px;
+  font-size: 1.1rem;
+}
+
+.rounds-info {
+  color: #6c757d;
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-left: 10px;
+}
+
+/* Estilos para los nombres de los jugadores */
+.player-names-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  background-color: #f0f7ff;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 15px;
+  border: 1px solid #b3d7ff;
+}
+
+.player-name-input {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.player-name-input label {
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #495057;
+}
+
+.player-name-input input {
+  width: 200px;
+  padding: 10px;
+  font-size: 1rem;
+  border: 2px solid #ced4da;
+  border-radius: 5px;
+  transition: border-color 0.3s;
+}
+
+.player-name-input:nth-child(1) input {
+  border-left: 4px solid #007bff;
+}
+
+.player-name-input:nth-child(2) input {
+  border-left: 4px solid #dc3545;
+}
+
+.teacher-instructions {
+  background-color: #e2f3fd;
+  padding: 10px;
+  border-radius: 5px;
+  border-left: 4px solid #17a2b8;
+  text-align: left;
+  margin-top: 15px;
+}
+
+.teacher-instructions p {
+  margin: 5px 0;
+  color: #155724;
+}
+
+.validate-button {
+  margin-top: 10px;
+  padding: 8px 15px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.validate-button:hover {
+  background-color: #218838;
+}
+
+.apply-config-button {
+  padding: 12px 20px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+.apply-config-button:hover {
+  background-color: #218838;
+  transform: translateY(-2px);
+}
+
+/* Estilos adicionales para la cuadrícula en modo profesor */
+.teacher-grid-cell {
+  cursor: pointer;
+  position: relative;
+}
+
+.teacher-grid-cell:hover {
+  border-color: #007bff;
+}
+
+.cell-coords {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  font-size: 0.7rem;
+  color: #6c757d;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.correct-cell {
+  background-color: rgba(40, 167, 69, 0.2);
+}
+
+.incorrect-cell {
+  background-color: rgba(220, 53, 69, 0.2);
 }
 
 .instructions {
@@ -390,4 +743,232 @@ body {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Estilos para modo 1vs1 */
+.game-status {
+  margin: 20px 0;
+  transition: all 0.5s ease;
+}
+
+.player-player1-turn {
+  border-left: 6px solid #007bff;
+}
+
+.player-player2-turn {
+  border-left: 6px solid #dc3545;
+}
+
+.player-info {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.player-score {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px 15px;
+  border-radius: 8px;
+  min-width: 180px;
+  transition: all 0.3s ease;
+}
+
+.player-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.player-avatar {
+  font-size: 2rem;
+  background-color: #e9ecef;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.player1-avatar {
+  background-color: #cfe2ff;
+  color: #0d6efd;
+}
+
+.player2-avatar {
+  background-color: #f8d7da;
+  color: #dc3545;
+}
+
+.player-name {
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+}
+
+.score-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  background-color: #e9ecef;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.current-player {
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  transform: scale(1.05);
+  border: 2px solid;
+}
+
+.player-player1-turn .current-player {
+  border-color: #007bff;
+}
+
+.player-player2-turn .current-player {
+  border-color: #dc3545;
+}
+
+.round-counter {
+  background-color: #6c757d;
+  color: white;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  display: inline-block;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+.turn-banner {
+  text-align: center;
+  padding: 10px;
+  background-color: rgba(255,255,255,0.7);
+  border-radius: 8px;
+  font-size: 1.3rem;
+  margin-top: 10px;
+}
+
+.player-player1-turn .turn-banner {
+  background-color: #cfe2ff;
+  color: #0d6efd;
+}
+
+.player-player2-turn .turn-banner {
+  background-color: #f8d7da;
+  color: #dc3545;
+}
+
+/* Animaciones eliminadas */
+
+.player-winner {
+  background-color: #28a745;
+  color: white;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.win-message {
+  color: #28a745;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.lose-message {
+  color: #dc3545;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Estilos para la tabla de puntuación final */
+.final-scores {
+  margin-top: 20px;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+}
+
+.score-table {
+  margin-top: 15px;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.score-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 15px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background-color: #ffffff;
+  border: 1px solid #e9ecef;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.score-row.winner-row {
+  background-color: #d1e7dd;
+  border-color: #badbcc;
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.final-score {
+  font-weight: bold;
+  font-size: 1.5rem;
+  padding: 5px 12px;
+  border-radius: 50%;
+  background-color: #e9ecef;
+  color: #212529;
+  min-width: 40px;
+  text-align: center;
+}
+
+.winner-row .final-score {
+  background-color: #28a745;
+  color: white;
+}
+
+.winner-trophy {
+  font-size: 1.8rem;
+  margin-left: 10px;
+}
+
+.tie-message {
+  background-color: #cff4fc;
+  color: #055160;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-top: 15px;
+  border-left: 5px solid #0dcaf0;
+  text-align: center;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
