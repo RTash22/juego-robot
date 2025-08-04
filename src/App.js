@@ -59,7 +59,8 @@ function App() {
   const [openSections, setOpenSections] = useState({
     problemMath: true,
     gameMode: false,
-    boardDesign: false
+    boardDesign: false,
+    roundsDesign: false
   });
   
   // Estado para el puntaje de los jugadores en modo 1vs1
@@ -67,6 +68,18 @@ function App() {
   
   // Estado para el jugador actual en modo 1vs1
   const [currentPlayer, setCurrentPlayer] = useState('player1');
+  
+  // Estado para las rondas personalizadas en modo profesor
+  const [customRounds, setCustomRounds] = useState([]);
+  
+  // Estado para la ronda actual que se está editando
+  const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
+  
+  // Estado para indicar si se están usando rondas personalizadas configuradas
+  const [usingConfiguredRounds, setUsingConfiguredRounds] = useState(false);
+  
+  // Estado para llevar el control de la ronda actual en juego
+  const [gameRoundIndex, setGameRoundIndex] = useState(0);
 
   // Generar un nuevo problema de suma al cargar la app
   useEffect(() => {
@@ -84,7 +97,8 @@ function App() {
     
     setProblem({ num1, num2, result });
     
-    // Crear la cuadrícula con celdas vacías
+    // Crear la cuadrícula con celdas vacías (todos null)
+    // Esto asegura que no haya valores residuales de rondas anteriores
     const newGrid = Array(5).fill().map(() => Array(5).fill(null));
     
     // Elegir posición para la respuesta correcta (no puede ser la posición inicial)
@@ -432,16 +446,96 @@ function App() {
     setRobot({ x: 0, y: 0, direction: 'right', isMoving: false });
     setCommands([]);
     setModal({ show: false, message: '', success: false, showPath: false });
+    
+    // Si estamos usando rondas configuradas, volver a cargar la ronda actual
+    if (usingConfiguredRounds && window.gameRounds && window.gameRounds.length > 0) {
+      const currentRound = window.gameRounds[gameRoundIndex];
+      if (currentRound) {
+        // Hacer una copia profunda para evitar modificar la original
+        const gridCopy = JSON.parse(JSON.stringify(currentRound.grid));
+        setGrid(gridCopy);
+        console.log("Restableciendo tablero a configuración original:", gridCopy);
+      }
+    }
   };
 
   // Renderizar un nuevo problema
   const newProblem = () => {
-    generateNewProblem();
+    if (usingConfiguredRounds && window.gameRounds && window.gameRounds.length > 0) {
+      // En modo de rondas configuradas, avanzamos a la siguiente ronda
+      let nextRoundIndex;
+      
+      if (gameMode === '1vs1') {
+        // En modo 1vs1, calculamos la ronda basada en la puntuación total
+        const totalPlays = scores.player1 + scores.player2;
+        nextRoundIndex = Math.min(totalPlays % window.gameRounds.length, window.gameRounds.length - 1);
+      } else {
+        // En modo individual, simplemente avanzamos a la siguiente ronda
+        nextRoundIndex = (gameRoundIndex + 1) % window.gameRounds.length;
+      }
+      
+      console.log(`Cargando ronda ${nextRoundIndex + 1} de ${window.gameRounds.length}`);
+      
+      // Cargar la ronda correspondiente
+      const nextRound = window.gameRounds[nextRoundIndex];
+      
+      if (!nextRound) {
+        console.error("No se pudo cargar la ronda:", nextRoundIndex);
+        alert("Error al cargar la ronda. Volviendo al modo aleatorio.");
+        setUsingConfiguredRounds(false);
+        generateNewProblem();
+        return;
+      }
+      
+      console.log("Cargando ronda configurada:", nextRound);
+      
+      // Asegurarse de crear copias profundas de los datos
+      setProblem(JSON.parse(JSON.stringify(nextRound.problem)));
+      
+      // Crear una copia profunda de la grid
+      const gridCopy = JSON.parse(JSON.stringify(nextRound.grid));
+      
+      // Asegurar que solo se muestran las respuestas configuradas explícitamente
+      // y que no hay valores residuales de rondas anteriores
+      for (let y = 0; y < 5; y++) {
+        for (let x = 0; x < 5; x++) {
+          // Solo mantener muros y respuestas (valores numéricos)
+          // Todo lo demás será null
+          const cell = gridCopy[y][x];
+          if (cell !== 'wall' && typeof cell !== 'number') {
+            gridCopy[y][x] = null;
+          }
+        }
+      }
+      
+      setGrid(gridCopy);
+      console.log("Grid cargada para juego:", gridCopy);
+      
+      // Crear una copia del camino solución
+      const pathCopy = JSON.parse(JSON.stringify(nextRound.solutionPath));
+      setSolutionPath(pathCopy);
+      
+      setGameRoundIndex(nextRoundIndex);
+      
+      // Mostrar información de la ronda actual
+      const roundName = nextRound.name || `Ronda ${nextRoundIndex + 1}`;
+      if (gameMode !== '1vs1') {
+        alert(`Cargando ${roundName}`);
+      }
+      
+      console.log("Problema cargado:", nextRound.problem);
+      console.log("Grid cargada:", gridCopy);
+    } else {
+      // Si no estamos en modo de rondas configuradas, generar un problema aleatorio
+      generateNewProblem();
+    }
     
     // En modo 1vs1, mostrar de quién es el turno
     if (gameMode === '1vs1') {
       const playerName = currentPlayer === 'player1' ? playerNames.player1 : playerNames.player2;
-      alert(`Turno de ${playerName}`);
+      const roundInfo = usingConfiguredRounds ? 
+        ` - ${window.gameRounds[gameRoundIndex].name || `Ronda ${gameRoundIndex + 1}`}` : '';
+      alert(`Turno de ${playerName}${roundInfo}`);
     }
   };
   
@@ -450,7 +544,38 @@ function App() {
     resetGame();
     setScores({ player1: 0, player2: 0 });
     setCurrentPlayer('player1');
-    generateNewProblem();
+    setGameRoundIndex(0);
+    
+    // Cargar la primera ronda si estamos usando rondas configuradas
+    if (usingConfiguredRounds && window.gameRounds && window.gameRounds.length > 0) {
+      const firstRound = window.gameRounds[0];
+      
+      // Usar JSON.parse/stringify para copias profundas
+      setProblem(JSON.parse(JSON.stringify(firstRound.problem)));
+      
+      // Copiar la grid asegurando que solo se incluyen muros y valores numéricos
+      const gridCopy = JSON.parse(JSON.stringify(firstRound.grid));
+      
+      // Asegurar que solo se muestran las respuestas configuradas explícitamente
+      for (let y = 0; y < 5; y++) {
+        for (let x = 0; x < 5; x++) {
+          // Solo mantener muros y respuestas (valores numéricos)
+          const cell = gridCopy[y][x];
+          if (cell !== 'wall' && typeof cell !== 'number') {
+            gridCopy[y][x] = null;
+          }
+        }
+      }
+      
+      setGrid(gridCopy);
+      setSolutionPath(JSON.parse(JSON.stringify(firstRound.solutionPath)));
+      
+      // Mostrar mensaje con el nombre de la primera ronda
+      const roundName = firstRound.name || "Ronda 1";
+      alert(`Comenzando partida con ${roundName}`);
+    } else {
+      generateNewProblem();
+    }
     
     // No reiniciamos los nombres de los jugadores para mantener la personalización
   };
@@ -458,6 +583,17 @@ function App() {
   // Cambiar entre modo estudiante y modo profesor
   const toggleTeacherMode = () => {
     const newMode = !teacherMode;
+    
+    // Si está usando rondas configuradas y quiere entrar al modo profesor, confirmar
+    if (newMode && usingConfiguredRounds) {
+      const confirmChange = window.confirm(
+        "Ya tienes rondas configuradas en uso. Si modificas la configuración, se aplicarán los cambios. ¿Deseas continuar?"
+      );
+      if (!confirmChange) {
+        return; // Cancelar el cambio de modo
+      }
+    }
+    
     setTeacherMode(newMode);
     
     if (newMode) {
@@ -469,6 +605,58 @@ function App() {
       
       // Copiar los valores del problema actual al formulario del profesor
       setTeacherProblem({ ...problem });
+      
+      // Si ya hay rondas configuradas, cargar esas
+      if (usingConfiguredRounds && window.gameRounds && window.gameRounds.length > 0) {
+        // Hacer copias profundas para evitar problemas de referencia
+        setCustomRounds(JSON.parse(JSON.stringify(window.gameRounds)));
+        setCurrentRoundIndex(0);
+        
+        // Cargar la primera ronda para edición
+        const firstRound = window.gameRounds[0];
+        
+        // Crear una copia profunda del grid
+        const gridCopy = JSON.parse(JSON.stringify(firstRound.grid));
+        
+        // Asegurar que las celdas muestran 'correct' e 'incorrect' en lugar de valores numéricos
+        // para facilitar la edición
+        for (let y = 0; y < 5; y++) {
+          for (let x = 0; x < 5; x++) {
+            const cell = gridCopy[y][x];
+            if (typeof cell === 'number') {
+              // Si el valor es igual al resultado, marcarlo como 'correct'
+              if (cell === parseInt(firstRound.problem.result, 10)) {
+                gridCopy[y][x] = 'correct';
+              } 
+              // Si no, marcarlo como 'incorrect'
+              else if (cell !== 'wall') {
+                gridCopy[y][x] = 'incorrect';
+              }
+            }
+          }
+        }
+        
+        setGrid(gridCopy);
+        setTeacherProblem(JSON.parse(JSON.stringify(firstRound.problem)));
+      } 
+      // Inicializar las rondas personalizadas si están vacías
+      else if (customRounds.length === 0) {
+        // Creamos una primera ronda basada en el estado actual
+        // Asegurarnos de que la grid es una copia profunda
+        const gridCopy = grid.length > 0 ? 
+          [...grid.map(row => row ? [...row] : Array(5).fill(null))] : 
+          Array(5).fill().map(() => Array(5).fill(null));
+          
+        const initialRound = {
+          grid: gridCopy,
+          problem: { ...problem },
+          name: "Ronda 1"
+        };
+        setCustomRounds([initialRound]);
+        setCurrentRoundIndex(0);
+        
+        console.log("Inicializando primera ronda:", initialRound);
+      }
     } else {
       // Al salir del modo profesor, aplicar los cambios si la configuración es válida
       validateAndApplyTeacherConfig();
@@ -500,116 +688,377 @@ function App() {
     }));
   };
   
-  // Validar y aplicar la configuración del profesor
-  const validateAndApplyTeacherConfig = () => {
-    // Contar cuántas casillas de respuesta correcta hay
-    let correctCount = 0;
-    let incorrectCount = 0;
-    let hasPath = false;
+  // Añadir una nueva ronda personalizada
+  const addCustomRound = () => {
+    // Guardar los cambios de la ronda actual antes de crear una nueva
+    saveCurrentRoundChanges();
     
-    // Crear una copia del grid actual
-    const currentGrid = [...grid.map(row => [...row])];
+    const newRoundNumber = customRounds.length + 1;
     
-    // Verificar las respuestas y calcular el resultado
-    for (let y = 0; y < 5; y++) {
-      for (let x = 0; x < 5; x++) {
-        if (currentGrid[y][x] === 'correct') {
-          correctCount++;
-          currentGrid[y][x] = teacherProblem.result;
-        } else if (currentGrid[y][x] === 'incorrect') {
-          incorrectCount++;
-          // Generar un valor incorrecto (diferente al resultado)
-          let incorrectValue;
-          do {
-            incorrectValue = Math.floor(Math.random() * 50) + 1;
-          } while (incorrectValue === teacherProblem.result);
-          currentGrid[y][x] = incorrectValue;
-        }
-      }
+    // Creamos una ronda con una cuadrícula vacía
+    const newGrid = Array(5).fill().map(() => Array(5).fill(null));
+    
+    const newRound = {
+      grid: newGrid,
+      problem: { ...teacherProblem },
+      name: `Ronda ${newRoundNumber}`
+    };
+    
+    // Añadir la nueva ronda
+    const updatedRounds = [...customRounds, newRound];
+    setCustomRounds(updatedRounds);
+    
+    // Cambiar a la nueva ronda
+    const newIndex = updatedRounds.length - 1;
+    setCurrentRoundIndex(newIndex);
+    setGrid(newGrid);
+    
+    console.log(`Creada nueva ronda ${newRoundNumber}`);
+    console.log("Total de rondas:", updatedRounds.length);
+  };
+  
+  // Eliminar una ronda personalizada
+  const deleteCustomRound = (index) => {
+    if (customRounds.length <= 1) {
+      alert("Debe haber al menos una ronda.");
+      return;
     }
     
-    // Si hay exactamente una respuesta correcta e incorrecta, actualizar el estado
-    if (correctCount === 1 && incorrectCount >= 1) {
-      // Verificar si hay un camino a la respuesta correcta
-      const visited = Array(5).fill().map(() => Array(5).fill(false));
-      let correctX, correctY;
+    const newRounds = [...customRounds];
+    newRounds.splice(index, 1);
+    
+    // Ajustar el índice actual si es necesario
+    if (currentRoundIndex >= newRounds.length) {
+      setCurrentRoundIndex(Math.max(0, newRounds.length - 1));
+    }
+    
+    setCustomRounds(newRounds);
+  };
+  
+  // Cambiar a una ronda específica para editarla
+  const selectRound = (index) => {
+    if (index >= 0 && index < customRounds.length) {
+      // Guardar los cambios actuales antes de cambiar
+      saveCurrentRoundChanges();
       
-      // Buscar la posición de la respuesta correcta
+      // Cambiar a la nueva ronda
+      setCurrentRoundIndex(index);
+      
+      // Cargar la configuración de la ronda seleccionada
+      const selectedRound = customRounds[index];
+      
+      // Asegurarse de hacer una copia profunda de la grid
+      const gridCopy = selectedRound.grid ? 
+        JSON.parse(JSON.stringify(selectedRound.grid)) : 
+        Array(5).fill().map(() => Array(5).fill(null));
+        
+      setGrid(gridCopy);
+      setTeacherProblem({ ...selectedRound.problem });
+      
+      console.log(`Seleccionada ronda ${index + 1} (${selectedRound.name})`);
+      console.log("Grid cargada:", gridCopy);
+      console.log("Problema cargado:", selectedRound.problem);
+    }
+  };
+  
+  // Guardar los cambios de la ronda actual
+  const saveCurrentRoundChanges = () => {
+    if (currentRoundIndex >= 0 && currentRoundIndex < customRounds.length) {
+      // Crear una copia profunda de todas las rondas
+      const updatedRounds = JSON.parse(JSON.stringify(customRounds));
+      
+      // Crear una copia profunda del grid actual
+      const gridCopy = JSON.parse(JSON.stringify(grid));
+      
+      // Limpiar cualquier celda que no sea 'wall', 'correct' o 'incorrect'
+      // Esto asegura que solo tengamos las celdas explícitamente configuradas
       for (let y = 0; y < 5; y++) {
         for (let x = 0; x < 5; x++) {
-          if (currentGrid[y][x] === teacherProblem.result) {
-            correctX = x;
-            correctY = y;
-            break;
+          const cell = gridCopy[y][x];
+          if (cell !== 'wall' && 
+              cell !== 'correct' && 
+              cell !== 'incorrect' && 
+              typeof cell !== 'number') {
+            gridCopy[y][x] = null;
           }
         }
-        if (correctX !== undefined) break;
       }
       
-      // Función para verificar si una celda es válida para moverse
-      const isSafe = (x, y) => {
-        return (
-          x >= 0 && x < 5 && y >= 0 && y < 5 && 
-          !visited[y][x] && 
-          currentGrid[y][x] !== 'wall'
-        );
+      // Asegurarse de que el problema tiene el resultado calculado correctamente
+      const num1Value = parseInt(teacherProblem.num1, 10) || 0;
+      const num2Value = parseInt(teacherProblem.num2, 10) || 0;
+      const updatedProblem = { 
+        num1: num1Value,
+        num2: num2Value,
+        result: num1Value + num2Value
       };
       
-      // Búsqueda en profundidad para encontrar un camino
-      const findPath = (x, y, targetX, targetY, path = []) => {
-        // Marcamos la celda actual como visitada
-        visited[y][x] = true;
-        
-        // Si hemos llegado al destino, devolvemos true
-        if (x === targetX && y === targetY) {
-          return true;
+      updatedRounds[currentRoundIndex] = {
+        ...updatedRounds[currentRoundIndex],
+        grid: gridCopy,
+        problem: updatedProblem
+      };
+      
+      setCustomRounds(updatedRounds);
+      // También actualizar el teacherProblem para que refleje el resultado correcto
+      setTeacherProblem(updatedProblem);
+      
+      console.log(`Guardados cambios para ronda ${currentRoundIndex + 1}`);
+      console.log("Grid guardada:", gridCopy);
+      console.log("Problema guardado:", updatedProblem);
+      console.log("Total de rondas:", updatedRounds.length);
+    }
+  };
+  
+  // Cambiar el nombre de una ronda
+  const updateRoundName = (index, name) => {
+    const updatedRounds = [...customRounds];
+    updatedRounds[index] = {
+      ...updatedRounds[index],
+      name
+    };
+    setCustomRounds(updatedRounds);
+  };
+  
+  // Validar y aplicar la configuración del profesor
+  const validateAndApplyTeacherConfig = () => {
+    // Guardar los cambios de la ronda actual
+    saveCurrentRoundChanges();
+    
+    console.log("Validando configuración...");
+    console.log("Rondas personalizadas:", customRounds);
+    
+    // Validar cada ronda y crear la configuración final
+    const finalRounds = [];
+    let allValid = true;
+    
+    // Función para validar un tablero individual
+    const validateBoard = (boardGrid, boardProblem) => {
+      // Contar cuántas casillas de respuesta correcta hay
+      let correctCount = 0;
+      let incorrectCount = 0;
+      let hasPath = false;
+      
+      // Crear una copia del grid
+      const currentGrid = [...boardGrid.map(row => [...row])];
+      
+        // Verificar las respuestas y calcular el resultado
+      const resultValue = parseInt(boardProblem.result, 10);
+      console.log(`Buscando respuestas en el tablero. Resultado correcto: ${resultValue}`);
+      
+      // Primero, limpiamos cualquier respuesta numérica que no sea 'correct' o 'incorrect' o 'wall'
+      // Esto asegura que solo se mantengan las respuestas explícitamente configuradas
+      for (let y = 0; y < 5; y++) {
+        for (let x = 0; x < 5; x++) {
+          const cell = currentGrid[y][x];
+          // Si es un número y no está explícitamente configurado como correcto o incorrecto, lo limpiamos
+          if (typeof cell === 'number') {
+            currentGrid[y][x] = null;
+          }
         }
-        
-        // Movimientos posibles (arriba, derecha, abajo, izquierda)
-        const moves = [
-          { dx: 0, dy: -1 }, // arriba
-          { dx: 1, dy: 0 },  // derecha
-          { dx: 0, dy: 1 },  // abajo
-          { dx: -1, dy: 0 }  // izquierda
-        ];
-        
-        // Probar cada dirección
-        for (const move of moves) {
-          const newX = x + move.dx;
-          const newY = y + move.dy;
+      }
+      
+      // Ahora procesamos solo las celdas explícitamente marcadas
+      for (let y = 0; y < 5; y++) {
+        for (let x = 0; x < 5; x++) {
+          const cell = currentGrid[y][x];
           
-          if (isSafe(newX, newY)) {
-            path.push({ x: newX, y: newY });
-            if (findPath(newX, newY, targetX, targetY, path)) {
-              return true;
-            }
-            path.pop(); // Retroceder si el camino no lleva al destino
+          // Caso 1: Celda marcada explícitamente como "correct"
+          if (cell === 'correct') {
+            correctCount++;
+            console.log(`Encontrada respuesta correcta (marcada) en (${x},${y})`);
+            // Asignar el resultado como valor numérico
+            currentGrid[y][x] = resultValue;
+            console.log(`Asignado valor ${resultValue} a la celda correcta`);
+          } 
+          // Caso 2: Celda marcada explícitamente como "incorrect"
+          else if (cell === 'incorrect') {
+            incorrectCount++;
+            console.log(`Encontrada respuesta incorrecta en (${x},${y})`);
+            // Generar un valor incorrecto (diferente al resultado)
+            let incorrectValue;
+            do {
+              incorrectValue = Math.floor(Math.random() * 50) + 1;
+            } while (incorrectValue === resultValue);
+            currentGrid[y][x] = incorrectValue;
+            console.log(`Asignado valor ${incorrectValue} a la celda incorrecta`);
           }
         }
-        
-        return false;
-      };
-      
-      // Calcular el camino solución
-      const finalPath = [{ x: 0, y: 0 }]; // Incluimos la posición inicial
-      hasPath = findPath(0, 0, correctX, correctY, finalPath);
-      
-      if (hasPath) {
-        // Si hay un camino, actualizar el estado
-        setProblem({ ...teacherProblem });
-        setGrid(currentGrid);
-        setSolutionPath(finalPath);
-        return true;
-      } else {
-        alert("¡No hay un camino válido a la respuesta correcta! Por favor, ajusta los muros.");
-        return false;
       }
-    } else if (correctCount !== 1) {
-      alert("Debe haber exactamente una respuesta correcta.");
-      return false;
-    } else if (incorrectCount < 1) {
-      alert("Debe haber al menos una respuesta incorrecta.");
-      return false;
+      
+      console.log(`Conteo final: ${correctCount} celdas correctas, ${incorrectCount} celdas incorrectas`);
+      console.log("Grid después de procesar respuestas:", currentGrid);      
+      
+      // Si hay exactamente una respuesta correcta e incorrecta, actualizar el estado
+      if (correctCount === 1 && incorrectCount >= 1) {
+        console.log("Configuración válida: 1 respuesta correcta y al menos 1 incorrecta");
+        console.log("Problema a validar:", boardProblem);
+        
+        // Verificar si hay un camino a la respuesta correcta
+        const visited = Array(5).fill().map(() => Array(5).fill(false));
+        let correctX, correctY;
+        
+        // Buscar la posición de la respuesta correcta
+        console.log("Buscando posición de la respuesta correcta para validación de camino...");
+        const resultValue = parseInt(boardProblem.result, 10);
+        
+        for (let y = 0; y < 5; y++) {
+          for (let x = 0; x < 5; x++) {
+            // Verificar el valor numérico (la celda 'correct' ya debería haberse convertido a número)
+            const cellValue = currentGrid[y][x];
+            
+            if (cellValue === resultValue) {
+              correctX = x;
+              correctY = y;
+              console.log(`Encontrada respuesta correcta para validación en (${x},${y}), valor: ${cellValue}`);
+              break;
+            }
+          }
+          if (correctX !== undefined) break;
+        }
+        
+        // Verificación adicional para debugging
+        if (correctX === undefined || correctY === undefined) {
+          console.error("No se encontró la respuesta correcta en el tablero.");
+          console.log("Grid completa:", currentGrid);
+          console.log("Buscando valor:", resultValue);
+        }
+        
+        // Si no se encontró la respuesta correcta, es un error
+        if (correctX === undefined || correctY === undefined) {
+          return { isValid: false, error: "No se pudo encontrar la posición de la respuesta correcta." };
+        }
+        
+        // Función para verificar si una celda es válida para moverse
+        const isSafe = (x, y) => {
+          return (
+            x >= 0 && x < 5 && y >= 0 && y < 5 && 
+            !visited[y][x] && 
+            currentGrid[y][x] !== 'wall'
+          );
+        };
+        
+        // Búsqueda en profundidad para encontrar un camino
+        const findPath = (x, y, targetX, targetY, path = []) => {
+          // Marcamos la celda actual como visitada
+          visited[y][x] = true;
+          
+          // Si hemos llegado al destino, devolvemos true
+          if (x === targetX && y === targetY) {
+            return true;
+          }
+          
+          // Movimientos posibles (arriba, derecha, abajo, izquierda)
+          const moves = [
+            { dx: 0, dy: -1 }, // arriba
+            { dx: 1, dy: 0 },  // derecha
+            { dx: 0, dy: 1 },  // abajo
+            { dx: -1, dy: 0 }  // izquierda
+          ];
+          
+          // Probar cada dirección
+          for (const move of moves) {
+            const newX = x + move.dx;
+            const newY = y + move.dy;
+            
+            if (isSafe(newX, newY)) {
+              path.push({ x: newX, y: newY });
+              if (findPath(newX, newY, targetX, targetY, path)) {
+                return true;
+              }
+              path.pop(); // Retroceder si el camino no lleva al destino
+            }
+          }
+          
+          return false;
+        };
+        
+        // Calcular el camino solución
+        const finalPath = [{ x: 0, y: 0 }]; // Incluimos la posición inicial
+        hasPath = findPath(0, 0, correctX, correctY, finalPath);
+        
+        if (hasPath) {
+          console.log("Camino encontrado a la respuesta correcta:", finalPath);
+          console.log("Grid final validada:", currentGrid);
+          
+          // Si hay un camino, retornamos la configuración final y el camino
+          return {
+            grid: currentGrid,
+            problem: boardProblem,
+            solutionPath: finalPath,
+            isValid: true
+          };
+        } else {
+          console.error("No se encontró un camino a la respuesta correcta");
+          return { isValid: false, error: "No hay un camino válido a la respuesta correcta." };
+        }
+      } else if (correctCount !== 1) {
+        return { isValid: false, error: "Debe haber exactamente una respuesta correcta." };
+      } else if (incorrectCount < 1) {
+        return { isValid: false, error: "Debe haber al menos una respuesta incorrecta." };
+      }
+      
+      return { isValid: false, error: "Configuración inválida." };
+    };
+    
+    // Validar cada ronda
+    for (let i = 0; i < customRounds.length; i++) {
+      const round = customRounds[i];
+      console.log(`Validando ronda ${i + 1} (${round.name}):`);
+      console.log("Grid:", round.grid);
+      console.log("Problema:", round.problem);
+      
+      const validationResult = validateBoard(round.grid, round.problem);
+      
+      if (!validationResult.isValid) {
+        console.error(`Error en ronda ${i + 1}:`, validationResult.error);
+        alert(`Error en ${round.name}: ${validationResult.error}`);
+        allValid = false;
+        setCurrentRoundIndex(i);
+        
+        // Cargar la ronda con error para que el usuario pueda corregirla
+        setGrid([...round.grid.map(row => [...row])]);
+        setTeacherProblem({ ...round.problem });
+        
+        break;
+      }
+      
+      console.log(`Ronda ${i + 1} válida. Solución:`, validationResult.solutionPath);
+      
+      finalRounds.push({
+        grid: validationResult.grid,
+        problem: validationResult.problem,
+        solutionPath: validationResult.solutionPath,
+        name: round.name
+      });
+    }
+    
+    if (allValid) {
+      // Si todas las rondas son válidas, actualizar el estado y comenzar con la primera ronda
+      // Aquí podemos ajustar el número de rondas según el modo de juego
+      setRounds(customRounds.length); 
+      
+      // Cargar la primera ronda
+      const firstRound = finalRounds[0];
+      setProblem(JSON.parse(JSON.stringify(firstRound.problem)));
+      
+      // Hacer una copia profunda usando JSON parse/stringify para evitar referencias
+      const gridCopy = JSON.parse(JSON.stringify(firstRound.grid));
+      setGrid(gridCopy);
+      
+      // Copiar camino solución
+      setSolutionPath(JSON.parse(JSON.stringify(firstRound.solutionPath)));
+      
+      // Activar el modo de rondas configuradas
+      setUsingConfiguredRounds(true);
+      setGameRoundIndex(0);
+      
+      // Guardar todas las rondas configuradas usando JSON para asegurar copias profundas
+      window.gameRounds = JSON.parse(JSON.stringify(finalRounds));
+      
+      // Mostrar mensaje de confirmación
+      alert("Configuración guardada. El juego ahora usará las rondas personalizadas.");
+      return true;
     }
     
     return false;
@@ -624,29 +1073,69 @@ function App() {
     switch (selectedTool) {
       case 'wall':
         newGrid[y][x] = 'wall';
+        console.log(`Colocando muro en (${x},${y})`);
         break;
       case 'correct':
         // Eliminar cualquier otra respuesta correcta primero
         for (let i = 0; i < 5; i++) {
           for (let j = 0; j < 5; j++) {
-            if (newGrid[i][j] === 'correct') {
+            if (newGrid[i][j] === 'correct' || newGrid[i][j] === parseInt(teacherProblem.result, 10)) {
+              console.log(`Eliminando respuesta correcta previa en (${j},${i})`);
               newGrid[i][j] = null;
             }
           }
         }
         newGrid[y][x] = 'correct';
+        console.log(`Colocando respuesta correcta en (${x},${y}), valor: ${teacherProblem.result}`);
         break;
       case 'incorrect':
+        // Si ya había una respuesta correcta en esta posición, eliminarla
+        if (newGrid[y][x] === 'correct' || newGrid[y][x] === parseInt(teacherProblem.result, 10)) {
+          console.log(`Reemplazando respuesta correcta con incorrecta en (${x},${y})`);
+        }
         newGrid[y][x] = 'incorrect';
+        console.log(`Colocando respuesta incorrecta en (${x},${y})`);
         break;
       case 'empty':
         newGrid[y][x] = null;
+        console.log(`Limpiando celda en (${x},${y})`);
         break;
       default:
         break;
     }
     
-    setGrid(newGrid);
+    // Actualizar la grid directamente
+    setGrid([...newGrid]);
+    
+    // También actualizar la ronda actual en customRounds
+    if (customRounds.length > 0) {
+      console.log(`Actualizando ronda ${currentRoundIndex + 1} con nuevos cambios de celda en (${x},${y}): ${selectedTool}`);
+      console.log("Grid actualizada:", newGrid);
+      
+      // Limpiar cualquier valor residual que no sea wall, correct o incorrect
+      for (let i = 0; i < 5; i++) {
+        for (let j = 0; j < 5; j++) {
+          if (newGrid[i][j] !== 'wall' && 
+              newGrid[i][j] !== 'correct' && 
+              newGrid[i][j] !== 'incorrect' && 
+              typeof newGrid[i][j] !== 'number') {
+            newGrid[i][j] = null;
+          }
+        }
+      }
+      
+      // Guardar cambio inmediatamente para asegurar consistencia
+      // Usamos JSON para crear una copia profunda y evitar problemas de referencia
+      const updatedRounds = JSON.parse(JSON.stringify(customRounds));
+      updatedRounds[currentRoundIndex] = {
+        ...updatedRounds[currentRoundIndex],
+        grid: JSON.parse(JSON.stringify(newGrid))
+      };
+      setCustomRounds(updatedRounds);
+      
+      // Actualizamos directamente en saveCurrentRoundChanges en vez de aquí
+      saveCurrentRoundChanges();
+    }
   };
   
   // Manejar cambios en el problema del profesor
@@ -690,12 +1179,30 @@ function App() {
     <div className="app-container">
       <div className="app-header">
         <h1 className="app-title">Juego Educativo del Robot</h1>
-        <button 
-          className={`teacher-mode-button ${teacherMode ? 'active' : ''}`} 
-          onClick={toggleTeacherMode}
-        >
-          {teacherMode ? '👨‍🎓 Modo Estudiante' : '👨‍🏫 Modo Profesor'}
-        </button>
+        <div className="header-buttons">
+          {usingConfiguredRounds && !teacherMode && (
+            <div className="configured-mode-indicator">
+              <span className="mode-label">Modo Rondas Configuradas</span>
+              <button 
+                className="reset-mode-button"
+                onClick={() => {
+                  if (confirm("¿Deseas desactivar las rondas configuradas y volver al modo aleatorio?")) {
+                    setUsingConfiguredRounds(false);
+                    generateNewProblem();
+                  }
+                }}
+              >
+                🔄 Volver a modo aleatorio
+              </button>
+            </div>
+          )}
+          <button 
+            className={`teacher-mode-button ${teacherMode ? 'active' : ''}`} 
+            onClick={toggleTeacherMode}
+          >
+            {teacherMode ? '👨‍🎓 Modo Estudiante' : '👨‍🏫 Modo Profesor'}
+          </button>
+        </div>
       </div>
       
       {teacherMode ? (
@@ -822,13 +1329,72 @@ function App() {
             </div>
           </div>
           
+          {/* Configuración de rondas */}
+          <div className="teacher-section">
+            <div 
+              className="teacher-section-header"
+              onClick={() => toggleSection('roundsDesign')}
+            >
+              <h4>Configuración de Rondas</h4>
+              <span className={`section-toggle-icon ${openSections.roundsDesign ? 'open' : ''}`}>
+                ▼
+              </span>
+            </div>
+            
+            <div className={`teacher-section-content ${openSections.roundsDesign ? 'open' : ''}`}>
+              <div className="rounds-manager">
+                <div className="rounds-list">
+                  {customRounds.map((round, index) => (
+                    <div 
+                      key={`round-${index}`} 
+                      className={`round-item ${currentRoundIndex === index ? 'active' : ''}`}
+                    >
+                      <input 
+                        type="text" 
+                        value={round.name} 
+                        onChange={(e) => updateRoundName(index, e.target.value)}
+                        className="round-name-input"
+                      />
+                      <div className="round-actions">
+                        <button 
+                          className="round-select-btn"
+                          onClick={() => selectRound(index)}
+                        >
+                          Editar
+                        </button>
+                        <button 
+                          className="round-delete-btn"
+                          onClick={() => deleteCustomRound(index)}
+                        >
+                          ❌
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounds-controls">
+                  <button className="add-round-btn" onClick={addCustomRound}>
+                    + Añadir Ronda
+                  </button>
+                  <p className="rounds-info">
+                    Total de rondas: {customRounds.length} (Cada jugador jugará cada ronda una vez)
+                  </p>
+                </div>
+                <p className="rounds-instructions">
+                  <strong>Instrucciones:</strong> Configura cada ronda con su propio problema y diseño de tablero. 
+                  Cambia entre rondas para editarlas individualmente.
+                </p>
+              </div>
+            </div>
+          </div>
+          
           {/* Herramientas para el diseño del tablero */}
           <div className="teacher-section">
             <div 
               className="teacher-section-header"
               onClick={() => toggleSection('boardDesign')}
             >
-              <h4>Diseño del Tablero</h4>
+              <h4>Diseño del Tablero {customRounds[currentRoundIndex]?.name || ''}</h4>
               <span className={`section-toggle-icon ${openSections.boardDesign ? 'open' : ''}`}>
                 ▼
               </span>
@@ -962,6 +1528,12 @@ function App() {
       
       {/* Problema matemático */}
       <div className="problem-container">
+        {usingConfiguredRounds && !teacherMode && (
+          <div className="current-round-indicator">
+            {window.gameRounds && window.gameRounds[gameRoundIndex] && 
+              window.gameRounds[gameRoundIndex].name || `Ronda ${gameRoundIndex + 1}`}
+          </div>
+        )}
         <h2 className="problem">¿Cuánto es {teacherMode ? teacherProblem.num1 : problem.num1} + {teacherMode ? teacherProblem.num2 : problem.num2}?</h2>
       </div>
       
@@ -1086,7 +1658,14 @@ function App() {
             onClick={() => {
               if (validateAndApplyTeacherConfig()) {
                 setTeacherMode(false);
-                alert("¡Configuración aplicada con éxito! Cambiando al modo estudiante.");
+                
+                // Mostrar información sobre las rondas configuradas
+                if (customRounds.length > 0) {
+                  const roundsNames = customRounds.map(r => r.name).join(", ");
+                  alert(`¡Configuración aplicada con éxito! Se han configurado ${customRounds.length} rondas: ${roundsNames}. El juego ahora usará estas rondas.`);
+                } else {
+                  alert("¡Configuración aplicada con éxito! Cambiando al modo estudiante.");
+                }
               }
             }}
           >

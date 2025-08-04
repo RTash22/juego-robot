@@ -24,6 +24,12 @@ body {
   margin-bottom: 15px;
 }
 
+.header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
 .app-title {
   font-size: 2rem;
   color: #ff6b6b;
@@ -40,6 +46,38 @@ body {
   cursor: pointer;
   font-size: 1rem;
   transition: all 0.3s ease;
+}
+
+.configured-mode-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  margin-right: 10px;
+}
+
+.mode-label {
+  background-color: #28a745;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.reset-mode-button {
+  padding: 5px 10px;
+  background-color: #ffc107;
+  color: #212529;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.3s ease;
+}
+
+.reset-mode-button:hover {
+  background-color: #e0a800;
 }
 
 .teacher-mode-button:hover {
@@ -389,16 +427,30 @@ body {
 
 /* Estilos para el problema matemático */
 .problem-container {
-  background-color: #ffd166;
-  border-radius: 15px;
-  padding: 15px;
+  text-align: center;
   margin-bottom: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
 }
 
 .problem {
-  font-size: 1.8rem;
-  color: #333;
+  display: inline-block;
+  background-color: #ffeeba;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.current-round-indicator {
+  background-color: #6c757d;
+  color: white;
+  border-radius: 20px;
+  padding: 5px 15px;
+  font-weight: bold;
+  display: inline-block;
+  margin-bottom: 10px;
+  animation: fadeIn 0.5s;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Estilos para la cuadrícula */
@@ -966,6 +1018,96 @@ body {
   margin-top: 15px;
   border-left: 5px solid #0dcaf0;
   text-align: center;
+}
+
+/* Nuevos estilos para la gestión de rondas */
+.rounds-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.rounds-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.round-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #e9ecef;
+  border-radius: 6px;
+  width: calc(50% - 5px);
+  transition: background-color 0.2s;
+}
+
+.round-item.active {
+  background-color: #d1ecf1;
+  border-left: 4px solid #17a2b8;
+}
+
+.round-name-input {
+  width: 60%;
+  padding: 5px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.round-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.round-select-btn {
+  padding: 4px 8px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.round-delete-btn {
+  padding: 4px 8px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.rounds-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.add-round-btn {
+  padding: 8px 16px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.rounds-info {
+  color: #6c757d;
+}
+
+.rounds-instructions {
+  background-color: #fff3cd;
+  padding: 10px;
+  border-radius: 4px;
 }
 
 @keyframes fadeIn {
