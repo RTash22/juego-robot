@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/juego-robot/static/css/main.4e2c2d46.css",
+    "main.js": "/juego-robot/static/js/main.addfbce3.js",
+    "static/js/453.5491939f.chunk.js": "/juego-robot/static/js/453.5491939f.chunk.js",
+    "index.html": "/juego-robot/index.html",
+    "main.4e2c2d46.css.map": "/juego-robot/static/css/main.4e2c2d46.css.map",
+    "main.addfbce3.js.map": "/juego-robot/static/js/main.addfbce3.js.map",
+    "453.5491939f.chunk.js.map": "/juego-robot/static/js/453.5491939f.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.4e2c2d46.css",
+    "static/js/main.addfbce3.js"
+  ]
+}
